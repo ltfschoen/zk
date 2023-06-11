@@ -109,3 +109,39 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
 ## References <a id="references"></a>
 
 * https://www.youtube.com/watch?v=h-94UhJLeck
+
+* ZK Multiplier
+    * https://medium.com/@yujiangtham/writing-a-zero-knowledge-dapp-fd7f936e2d43
+    * https://github.com/ytham/zk_example_dapp
+
+* ZK Battlezips
+    * https://github.com/BattleZips/BattleZips-Circom
+
+* ZK REPL
+    * https://bounties.gitcoin.co/grants/5121/zkrepl-an-online-playground-for-zero-knowledge-cir
+
+* Circom 2 Docs
+    * https://docs.circom.io
+
+* ZK Coin Flip
+    * https://github.com/jstoxrocky/zksnarks_example#what-sort-of-applications-does-zksnarks-have
+
+* ZK SNARK Poker
+    * https://github.com/glamperd/snark-example/blob/master/poker/poker.sol
+
+* ZK Dice
+    * https://ethereum.stackexchange.com/questions/41660/is-it-possible-to-build-a-simple-dice-rolling-game-on-ethereum-with-solidity
+
+* Randomness
+    * https://revelry.co/insights/blockchain/critical-randao-vulnerability/
+    * https://yos.io/2018/10/20/smart-contract-vulnerabilities-and-how-to-mitigate-them/#mitigation-bad-randomness
+    * https://github.com/randao/randao
+    * https://www.bookstack.cn/read/ethereumbook-en/spilt.8.c2a6b48ca6e1e33c.md
+
+* Unsorted
+    * https://blog.trailofbits.com/2020/12/14/reverie-an-optimized-zero-knowledge-proof-system/
+    * https://dev.to/heymarkkop/zku-week-1-introduction-to-zkp-h5
+    * https://github.com/iden3/distanceProver
+    * https://github.com/vplasencia/circom-snarkjs-scripts
+    * https://github.com/Darlington02/circom-next-starter
+    * https://github.com/glamperd/snarkjs-react
