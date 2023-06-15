@@ -145,3 +145,11 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
     * https://github.com/vplasencia/circom-snarkjs-scripts
     * https://github.com/Darlington02/circom-next-starter
     * https://github.com/glamperd/snarkjs-react
+    * https://github.com/scipr-lab/libsnark
+    * https://crypto.stackexchange.com/questions/66037/what-is-the-role-of-a-circuit-in-zk-snarks
+    * https://medium.com/coinmonks/zk-poker-a-simple-zk-snark-circuit-8ec8d0c5ee52
+    * https://medium.com/@yujiangtham/writing-a-zero-knowledge-dapp-fd7f936e2d43
+    * https://killari.medium.com/implementing-zero-knowledge-lotterys-circom-circuits-part-2-2-59a2f976cd24
+    * https://consensys.net/blog/developers/introduction-to-zk-snarks/
+    * https://blog.cr.yp.to/20140205-entropy.html
+    * https://mixbytes.io/blog/zksnarks-circom-and-go-practice-part-2#rec589652084
