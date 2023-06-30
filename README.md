@@ -153,3 +153,9 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
     * https://consensys.net/blog/developers/introduction-to-zk-snarks/
     * https://blog.cr.yp.to/20140205-entropy.html
     * https://mixbytes.io/blog/zksnarks-circom-and-go-practice-part-2#rec589652084
+    * [Extropy tutorials](https://www.extropy.io/)
+    * [AwesomeZK](https://github.com/fewwwww/awesome-zk)
+    * [Encode ZK Bootcamp](https://www.encode.club/zk-bootcamp)
+    * [zkOracle](https://ethresear.ch/t/defining-zkoracle-for-ethereum/15131)
+    * [zkOracle Wiki (another project)](https://zkoracleofficial.gitbook.io/zk-oracle-wiki/)
+    * [ZK Podcast](https://zeroknowledge.fm/)

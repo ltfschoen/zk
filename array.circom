@@ -12,6 +12,7 @@ template Example (len) {
     signal output out;
     var a2[len] = a1;
 
+    // prefer to sort first outside the circuit to avoid O(n)
     for(var i = 0; i < len; i++) {
         for(var j = 0; j < len; j++) {
             assert(a1[i] == a2[j]);
