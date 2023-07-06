@@ -138,6 +138,13 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
     * https://github.com/randao/randao
     * https://www.bookstack.cn/read/ethereumbook-en/spilt.8.c2a6b48ca6e1e33c.md
 
+* zkOracle
+    * zkOracle Hyper Oracle Youtube - https://www.youtube.com/watch?v=YVWAQI2Kaew
+    * [zkOracle Youtube](https://www.youtube.com/watch?v=kHT6uOX3jto)
+    * [zkOracle](https://ethresear.ch/t/defining-zkoracle-for-ethereum/15131)
+    * [zkOracle Wiki (another project)](https://zkoracleofficial.gitbook.io/zk-oracle-wiki/)
+    * zkWasm - https://github.com/hyperoracle/zkWasm
+
 * Unsorted
     * https://blog.trailofbits.com/2020/12/14/reverie-an-optimized-zero-knowledge-proof-system/
     * https://dev.to/heymarkkop/zku-week-1-introduction-to-zkp-h5
@@ -153,9 +160,14 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
     * https://consensys.net/blog/developers/introduction-to-zk-snarks/
     * https://blog.cr.yp.to/20140205-entropy.html
     * https://mixbytes.io/blog/zksnarks-circom-and-go-practice-part-2#rec589652084
-    * [Extropy tutorials](https://www.extropy.io/)
+    * [Extropy tutorials](https://www.extropy.io/#education)
     * [AwesomeZK](https://github.com/fewwwww/awesome-zk)
     * [Encode ZK Bootcamp](https://www.encode.club/zk-bootcamp)
-    * [zkOracle](https://ethresear.ch/t/defining-zkoracle-for-ethereum/15131)
-    * [zkOracle Wiki (another project)](https://zkoracleofficial.gitbook.io/zk-oracle-wiki/)
     * [ZK Podcast](https://zeroknowledge.fm/)
+    * Recursive zk
+        * https://medium.com/@rishotics/nova-based-folding-of-verifiable-ai-zkml-circuits-fdfdfd508736
+        * https://zkresear.ch/t/folding-endgame/106
+    * zk examples
+        * https://www.proofoftrack.xyz/p/proof-of-track-2023-06-29
+    * Georgios Konstantopoulos links
+        * https://www.gakonst.com/
