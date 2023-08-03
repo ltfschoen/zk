@@ -11,6 +11,7 @@
   * [Examples](#examples)
   * [Use Cases](#use-cases)
   * [Real-World Usage](#real)
+  * [Developer Experience](#devex)
   * [References](#references)
 
 ### Definitions <a id="definitions"></a>
@@ -405,6 +406,23 @@ https://www.youtube.com/watch?v=MBw86Z-s5HY
 
 ### Build <a id="build"></a>
 
+#### Cairo
+
+* Install [Scarb](https://docs.swmansion.com/scarb) 0.5.1
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v 0.5.1
+source /Users/luke/.bashrc
+scarb --version
+```
+* Note: [Prostar](https://docs.swmansion.com/protostar/) does not yet support Cairo V2
+
+* Create Scarb project
+```
+mkdir -p contracts
+scarb new ./contracts/cairo1_v2
+cd ./contracts/cairo1_v2
+```
+
 ### Examples <a id="examples"></a>
 
 #### Colour-Blind Verifier
@@ -529,6 +547,247 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
 
 * Reference: https://blog.cryptographyengineering.com/2017/01/21/zero-knowledge-proofs-an-illustrated-primer-part-2/
 
+## Developer Experience <a id="devex"></a>
+
+### Cairo Learning
+
+* https://github.com/ltfschoen/starklings-cairo1
+
+### Cairo Scarb
+
+* Cairo Mini Series https://extropy-io.medium.com/cairo-mini-series-4633053173f5
+    * use Scarb 0.5.1
+
+* Reference Lesson 5
+* References
+    * https://docs.swmansion.com/scarb
+    * https://asdf-vm.com/
+    * https://asdf-vm.com/guide/getting-started.html
+    * https://docs.swmansion.com/scarb/docs/cheatsheet
+
+```bash
+brew install coreutils curl git
+```
+* Add curl to PATH
+```
+echo 'export PATH="/usr/local/opt/curl/bin:$PATH"' >> $HOME/.bash_profile
+```
+
+* For compilers to find curl you may need to set:
+```
+export LDFLAGS="-L/usr/local/opt/curl/lib"
+export CPPFLAGS="-I/usr/local/opt/curl/include"
+```
+
+* For pkg-config to find curl you may need to set:
+```
+export PKG_CONFIG_PATH="/usr/local/opt/curl/lib/pkgconfig"
+```
+
+```
+brew install asdf
+```
+
+* Add asdf to shell profile
+```
+. /usr/local/opt/asdf/libexec/asdf.sh
+```
+
+```
+asdf plugin add scarb https://github.com/software-mansion/asdf-scarb.git
+asdf install scarb 0.5.1
+asdf global scarb 0.5.1
+asdf reshim scarb
+echo 'export PATH="/usr/local/opt/asdf/bin:$PATH"' >> $HOME/.bash_profile
+asdf current
+asdf which scarb
+echo 'export PATH="$HOME/.asdf/installs/scarb/0.5.1/bin:$PATH"' >> $HOME/.bash_profile
+source $HOME/.bash_profile
+scarb --version
+```
+
+* Install Starkli CLI to deploy smart contracts to Starknet 
+    * https://github.com/xJonathanLEI/starkli
+    * Docs https://book.starkli.rs/installation
+    ```
+    curl https://get.starkli.sh | sh
+    . $HOME/.starkli/env
+    starkliup
+    starkli --version
+    ```
+
+* Create project
+```
+mkdir -p contracts
+cd contracts
+scarb new hello_world
+cd hello_world
+touch ./src/contract.cairo
+```
+* Change contents of ./src/lib.cairo to be `mod contract;`
+* Paste contents for ./src/contract.cairo as shown at https://extropy-io.medium.com/cairo-mini-series-4633053173f5
+
+* Build smart contract with Scarb to generate Sierra JSON output ./target/dev/hello_world_contract.sierra.json
+```
+scarb clean
+scarb build
+```
+
+* Setup Signer account with Starkli
+    * Update .gitignore to include `keys/`
+    ```
+    mkdir -p keys
+    starkli signer keystore new ./keys/demo-key.json
+    ```
+    * Output
+        ```bash
+        Created new encrypted keystore file: ../zk/contracts/hello_world/keys/demo-key.json
+        Public key: 0x0590c8717f28e0ab8d03ca2a55cf760cecb795c9c51d79caa7918522e5590724
+        ```
+    * Enter password (if any) to encrypt to JSON file
+
+* Note: It is possible to inspect the associated private key with:
+    ```
+    starkli signer keystore inspect-private ./keys/demo-key.json
+    ```
+
+* Initialize OpenZeppelin account
+    ```
+    starkli account oz init ./keys/demo-account.json --keystore ./keys/demo-key.json
+    ```
+    * Enter password
+    * Output
+        ```bash
+        Created new account config file: ../zk/contracts/hello_world/keys/demo-account.json
+
+        Once deployed account available at 0x00cb2a0ea73f2b502eb51802b6c58f940ed859c4b062f81410475f7d132810d5
+
+        Deploy this account by running:
+            starkli account deploy ./keys/demo-account.json
+        ```
+
+* Request testnet from faucet L2 Goerli ETH to an account address on Starknet Goerli to pay transaction fee in Starknet https://faucet.goerli.starknet.io/
+    * Signer address balance https://testnet.starkscan.co/contract/0x0590c8717f28e0ab8d03ca2a55cf760cecb795c9c51d79caa7918522e5590724#portfolio
+* Repeat requesting testnet tokens for OpenZeppelin account that will exist once deployed (differs from public key) 0x00cb2a0ea73f2b502eb51802b6c58f940ed859c4b062f81410475f7d132810d5
+* Note: When you create a keystore with Starkli, it asks you to enter a password which acts as your encryption for the file. https://book.starkli.rs/signers?highlight=encr#encrypted-keystores
+* Note: The reason why it needs tokens is that the account you are about to deploy has to pay for the `DEPLOY_ACCOUNT` transaction fee. Refer to this resource to take Starkli to set it as your environment variable https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933
+
+* Deploy OpenZeppelin account
+    * https://book.starkli.rs/providers
+    ```
+    starkli account deploy ./keys/demo-account.json --keystore ./keys/demo-key.json --network goerli-1
+    ```
+
+    * Output
+        ```bash
+        The estimated account deployment fee is 0.000004323000034584 ETH. However, to avoid failure, fund at least:
+            0.000006484500051876 ETH
+        to the following address:
+            0x00cb2a0ea73f2b502eb51802b6c58f940ed859c4b062f81410475f7d132810d5
+        Press [ENTER] once you've funded the address.
+        Account deployment transaction: 0x06729884d01da04d405a87f73e8fc2cf9850b4451331a85321e84f644c444c03
+        Waiting for transaction 0x06729884d01da04d405a87f73e8fc2cf9850b4451331a85321e84f644c444c03 to confirm. If this process is interrupted, you will need to run `starkli account fetch` to update the account file.
+        Transaction not confirmed yet...
+        Transaction 0x06729884d01da04d405a87f73e8fc2cf9850b4451331a85321e84f644c444c03 confirmed
+        ```
+
+* Note: If you get error `Error: unable to convert gateway models to jsonrpc types` then you likely need to obtain testnet tokens for the public key or the account address from the faucet and check the balance exists using Starkscan
+
+* Declare contract
+    ```
+    starkli declare ./target/dev/hello_world_contract.sierra.json --account ./keys/demo-account.json --keystore ./keys/demo-key.json --compiler-version 2.0.1 --network goerli-1 --watch
+    ```
+    * Output
+        ```
+        Not declaring class as it's already declared. Class hash:
+        0x01bd57d79c17fe2a24c013f58c72a47f9f3acc0b8bd7e9b8e1e0f9e50936726f
+        ```
+    * Class hash https://testnet.starkscan.co/class/0x01bd57d79c17fe2a24c013f58c72a47f9f3acc0b8bd7e9b8e1e0f9e50936726f
+
+* Record HASH address that is returned
+
+* Deploy contract using HASH
+    ```
+    HASH=0x01bd57d79c17fe2a24c013f58c72a47f9f3acc0b8bd7e9b8e1e0f9e50936726f
+    starkli deploy $HASH --account ./keys/demo-account.json --keystore ./keys/demo-key.json --network goerli-1 --watch
+    ```
+    * Output
+        ```
+        Deploying class 0x01bd57d79c17fe2a24c013f58c72a47f9f3acc0b8bd7e9b8e1e0f9e50936726f with salt 0x00334d045db72d1ab2c0c2aca82be4b0b61d40e590e1c5bf5281a326d67349c1...
+        The contract will be deployed at address 0x046fe65fad329c740051c5ee0a54a8a1c46fb5a64854379cf2ca49ffe3e4cb94
+        Contract deployment transaction: 0x02900c8a0d2a58e3fca29766a20af02809f4fff8555fbd052509538511dc44d8
+        Waiting for transaction 0x02900c8a0d2a58e3fca29766a20af02809f4fff8555fbd052509538511dc44d8 to confirm...
+        Transaction not confirmed yet...
+        Transaction 0x02900c8a0d2a58e3fca29766a20af02809f4fff8555fbd052509538511dc44d8 confirmed
+        Contract deployed:
+        0x046fe65fad329c740051c5ee0a54a8a1c46fb5a64854379cf2ca49ffe3e4cb94
+        ```
+* Note: The salt acts as a seed that is used in the computation of the contract's address.
+https://docs.starknet.io/documentation/tools/CLI/commands/#starknet_deploy
+
+* View deployed contract and call functions
+    * https://goerli.voyager.online/contract/0x046fe65fad329c740051c5ee0a54a8a1c46fb5a64854379cf2ca49ffe3e4cb94#readContract
+
+### Cairo Extension for Visual Studio Code
+
+* Reference: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
+
+```bash
+mkdir -p starkware-libs && cd starkware-libs
+git clone https://github.com/starkware-libs/cairo
+cd ./cairo/vscode-cairo/
+nvm use v18.16.0
+sudo npm install --global @vscode/vsce
+```
+
+```
+npm install
+vsce package
+```
+
+```
+code --install-extension cairo1*.vsix
+```
+
+```
+code .
+```
+
+* View > Terminal
+```
+npm install
+npm run compile
+```
+* Restart Visual Studio Code
+
+* Note: It may be possible to just install Cairo support VSCode Extension "starkware.cairo" instead of the above steps
+    * https://marketplace.visualstudio.com/items?itemName=starkware.cairo1&ssr=false
+
+* Add the following to $HOME/Library/Application\ Support/Code/User/settings.json to  make the "Debug"/"Run" CodeLens above tests work and for logs to be printed in your VSCode terminal when you click the "Debug"/"Run" CodeLens above your tests.
+
+```
+code $HOME/Library/Application\ Support/Code/User/settings.json
+```
+* Paste the following in settings.json. Alternatively use `trace` instead of `debug`
+
+```
+"rust-analyzer.runnableEnv": {
+   "CARGO_MANIFEST_DIR": "/Users/luke/code/github/ltfschoen/starklings-cairo1/",
+   "RUST_LOG": "debug,salsa=off,minilp=off"
+},
+"[cairo]": {
+    "editor.tabSize": 4,
+    "editor.formatOnType": true,
+    "editor.insertSpaces": true,
+    "editor.semanticHighlighting.enabled": true
+},
+```
+
+* Install Cairo syntax highlighting with VSCode Extension "0xChqrles.cairo-language"
+
+* Open relevant Cairo code to run in VSCode
+* Run > Start Debugging (F5)
+
 ## References <a id="references"></a>
 
 * Encode ZK Bootcamp
@@ -631,3 +890,12 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
         * https://www.gakonst.com/
     * Cryptographic library https://github.com/jedisct1/libsodium
     * Polynomials Arithmetic https://www.youtube.com/watch?v=MBw86Z-s5HY
+    * Cairo
+        * https://cairo-by-example.com/
+        * https://book.cairo-lang.org/
+        * https://starknet-by-example.voyager.online/starknet-by-example.html 
+        * Node Guardians
+        * https://docs.swmansion.com/scarb/docs
+        * Cairo Workshop by David Barreto — https://www.youtube.com/watch?v=7Yfsm7V9R4A&ab_channel=Topology
+        * Starkli Advanced - https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933
+    * Advanced ZK by Extropy https://zkp.ninja/
