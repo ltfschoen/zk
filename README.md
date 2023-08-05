@@ -905,3 +905,5 @@ code $HOME/Library/Application\ Support/Code/User/settings.json
         * Cairo Workshop by David Barreto — https://www.youtube.com/watch?v=7Yfsm7V9R4A&ab_channel=Topology
         * Starkli Advanced - https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933
     * Advanced ZK by Extropy https://zkp.ninja/
+    * Starknet node
+        * https://www.kasar.io/
