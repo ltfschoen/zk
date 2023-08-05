@@ -10,7 +10,7 @@ mod contract{
     struct Storage{
         hello_world: felt252,
     }
-    
+
     #[constructor]
     fn constructor(ref self: ContractState){
         self.hello_world.write('Hello World!');

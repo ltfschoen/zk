@@ -553,6 +553,8 @@ TODO - https://youtu.be/h-94UhJLeck?t=604
 
 * https://github.com/ltfschoen/starklings-cairo1
 
+* Note: `ref` is the Cairo equivalent to `&mut` in Rust
+
 ### Cairo Scarb
 
 * Cairo Mini Series https://extropy-io.medium.com/cairo-mini-series-4633053173f5
@@ -728,6 +730,9 @@ https://docs.starknet.io/documentation/tools/CLI/commands/#starknet_deploy
 * View deployed contract and call functions
     * https://goerli.voyager.online/contract/0x046fe65fad329c740051c5ee0a54a8a1c46fb5a64854379cf2ca49ffe3e4cb94#readContract
 
+* Note: It is possible to deploy to a local network using Katana using `--rpc http://0.0.0.0:5050` instead of `--network goerli-1` 
+* Note: It is possible to incorporate use of wallets Braavos and Argent X (see https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933)
+
 ### Cairo Extension for Visual Studio Code
 
 * Reference: https://github.com/starkware-libs/cairo/tree/main/vscode-cairo
@@ -891,6 +896,7 @@ code $HOME/Library/Application\ Support/Code/User/settings.json
     * Cryptographic library https://github.com/jedisct1/libsodium
     * Polynomials Arithmetic https://www.youtube.com/watch?v=MBw86Z-s5HY
     * Cairo
+        * https://www.starknet-ecosystem.com/en/academy
         * https://cairo-by-example.com/
         * https://book.cairo-lang.org/
         * https://starknet-by-example.voyager.online/starknet-by-example.html 
