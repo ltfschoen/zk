@@ -731,6 +731,17 @@ https://docs.starknet.io/documentation/tools/CLI/commands/#starknet_deploy
     * https://goerli.voyager.online/contract/0x046fe65fad329c740051c5ee0a54a8a1c46fb5a64854379cf2ca49ffe3e4cb94#readContract
 
 * Note: It is possible to deploy to a local network using Katana using `--rpc http://0.0.0.0:5050` instead of `--network goerli-1` 
+    * Alternatively use Starknet Devnet https://github.com/0xSpaceShard/starknet-devnet/releases, where Seed 0 will ensure you to always work with the pregenerated accounts, accounts the number of accounts generated. Check more info on their subcommands here: https://0xspaceshard.github.io/starknet-devnet/docs/guide/run/
+        ```
+        brew install gmp
+        pip install starknet-devnet
+        starknet-devnet \
+            --accounts 3 \
+            --gas-price 250 \
+            --seed 0 \
+            --port 5050
+        ```
+    * Note: If encounter error can run in Docker container and expose relevant port
 * Note: It is possible to incorporate use of wallets Braavos and Argent X (see https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933)
 
 ### Cairo Extension for Visual Studio Code
@@ -792,6 +803,18 @@ code $HOME/Library/Application\ Support/Code/User/settings.json
 
 * Open relevant Cairo code to run in VSCode
 * Run > Start Debugging (F5)
+
+### Mina zkApp CLI
+
+* Reference https://github.com/o1-labs/zkapp-cli/
+* Homework 9
+
+```
+nvm use v16.18.1
+npm install -g zkapp-cli
+zk --version
+zk example sudoko
+```
 
 ## References <a id="references"></a>
 
@@ -904,6 +927,7 @@ code $HOME/Library/Application\ Support/Code/User/settings.json
         * https://docs.swmansion.com/scarb/docs
         * Cairo Workshop by David Barreto — https://www.youtube.com/watch?v=7Yfsm7V9R4A&ab_channel=Topology
         * Starkli Advanced - https://medium.com/starknet-edu/starkli-the-new-starknet-cli-86ea914a2933
+        * https://docs.openzeppelin.com/contracts-cairo/0.6.1/
     * Advanced ZK by Extropy https://zkp.ninja/
     * Starknet node
         * https://www.kasar.io/
