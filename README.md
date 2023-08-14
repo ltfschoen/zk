@@ -816,6 +816,89 @@ zk --version
 zk example sudoko
 ```
 
+### zkWASM
+
+#### zkGraph
+
+* zkGraph (offchain smart contract) - based on to The Graph's Subgraph https://thegraph.academy/developers/defining-a-subgraph/\
+	* Deposit Testnet ETH balance
+		* config.js `UserPrivateKey`
+	* Update config.js
+	* Run test.sh to check it works
+	* Configure using the zkGraph Template repository:
+		* zkgraph.yaml (configures the zkGraph, manifest, see documentation https://github.com/graphprotocol/graph-node/blob/master/docs/subgraph-manifest.md)
+			* Information for zkGraph Explorer
+			* data source (Meta Apps used)
+			* target blockchain network
+			* target smart contract address. Destination Contract Address is the on-chain contract that will be triggered by the I/O zkAutomation Meta App (a zkOracle) associated with the zkGraph
+			* target event
+			* event handler
+		* schema.graphql - optional data structure defining how data stored and accessed. See documentation https://graphql.org/learn/schema/#type-language
+		* config.js - configure local development API
+			* Ethereum JSON RPC provider URL (supporting `debug_getRawReceipts` JSON RPC method, e.g. HTTPS endpoint of Ethereum Goerli Testnet)
+			* Private key to sign zkWASM messages (with a balance of Goerli Testnet Eth)
+			* zkWASM provider URL (i.e. by Hyper Oracle)
+			* Compiler server endpoint (i.e. by Hyper Oracle)
+			* Built zkGraph WASM bin path full
+			* Built zkGraph WASM bin path local 
+		* References
+			* Library in AssemblyScript (data structures. i.e. Bytes, ByteArray, BigInt)
+			* Examples for reference (see ./example)
+
+	* Develop new zkGraph provable program by modifying the following in AssemblyScript with source code in ./src
+			* mapping.ts - specifies core data mapping logic of zkGraph (data mapping of off-chain computation logic) of filtering (run in zkWASM) and handling emitted on-chain event data (or setting up calldata of smart contract automation) in AssemblyScript and generation of output state in other forms. The defined data mapping is between zkGraphs in the zkOracle network, and the Meta Apps (zkIndexing, zkAutomation) in a Hyper Oracle zkOracle node. See https://docs.hyperoracle.io/zkgraph/introduction. It is used to execute zkGraph Standards (i.e. zkML https://docs.hyperoracle.io/zkgraph-standards/zkml, zkAutomation, or zkIndexing https://docs.hyperoracle.io/zkgraph-standards/zkindexing), and generate ZKPs in zkWASM)
+
+	* Interact with zkGraph using API (using ./api, see test.sh)
+
+	* Validate
+		* Compile
+			* Generates zkgraph.wat compiled WASM file from zkGraph using compiler server endpoint in config.js
+			* Generates hyper_oracle.wasm binary WASM file in build/ folder
+			* Estimate and minimise instructions costs to reduce proof generation time
+		* Setup
+			* Generate zkWASM image ID
+			* Deploy the WASM file to the Hyper Oracle node zkWASM provider url specified in config.js `CompilerServerEndpoint` for ZKP generation
+		* Execute
+			* Execution the WASM file to process data to get expected output at a specific Block Number and Generate Output State for the zkGraph if `require` used in mapping.ts to verify inputs and conditions before execution returns `true` using Hyper Oracle nodes.
+				* zkAutomation is an automation job that is triggered if all `require` conditiosn are `true`. See https://docs.hyperoracle.io/zkgraph/zkgraph-assemblyscript-lib
+				* zkAutomation is a I/O zkOracle, because the data flows from on-chain (original smart contract event data) to off-chain (zkGraph source) to on-chain (automation triggered).
+
+				* zkAutomation requires specifying their target contract, target function, and source (when to trigger). For more complex trigger conditions, developers can choose to either trigger automation every N-th block (in scenarios like a keeper bot) or use a zkGraph as the off-chain source. https://docs.hyperoracle.io/zkgraph-standards/zkautomation/introduction
+		* Prove
+			* Prove zkGraph (given a block number and expected state, we generate input, pre-test for actual proving, and prove)
+				* Hyper Oracle nodes used
+				* ZK proofs generated for the zkGraph to see if it is valid, based on the specified definitions to ensure computational integrity and validity
+	* Publish
+		* Upload zkGraph code and settings to an IPFS Address
+			* zkGraph code files stored in EthStorage (storage scaling layer supported by Ethereum ESP) to guarantee a fully decentralised development pipeline for zkGraph
+		* Deploy the ZK Verifier Contract for the ZKP of the zkGraph to Hyper Oracle testnet (for local testing or fully with zkWASM node)
+		* Deploy and Register the zkGraph with global on-chain Registry Contract
+
+* Subgraph
+	* Setup Subgraph:
+		* Create a subgraph through bootstrapping that is assigned to index all events of an existing smart contract that may have been deployed to Ethereum testnet or an example Subgraph (e.g. based on Graphity contract)
+		* Subgraph fetches contract ABI from Etherscan or fallback to requesting a local file path
+	* Define Subgraph manifest (i.e. subgraph.yaml) that specifies the:
+		* Smart contract address the Subgraph indexes to be sourced and ABI to use
+		* Events from the smart contracts to monitor
+		* Define mapping between event data emitted by the smart contract to entities The Graph Node stores
+	* Emitted events from smart contract are written to the Graph Node and stored as entities associated with that smart contract by the subgraph.
+	* ...
+	* Deploy Subgraph to hosted service and inspect using Graph Explorer
+	* Migrate Subgraphs to zkGraph
+		* Requires just 10 lines of configuration difference. Implementations such as Standardized Subgraph and ecosystem tooling like Instant Subgraph and Subgraph Uncrashable can be used for developing zkGraph.
+
+* Reference:
+	* zkGraph API Reference - https://docs.hyperoracle.io/zkgraph-standards/zkgraph
+	* https://docs.hyperoracle.io/zkgraph/develop/1.-zkgraph-studio-ui
+	* https://www.youtube.com/watch?v=1ehlXhwk5eE
+	* Subgraph
+		* https://thegraph.academy/developers/defining-a-subgraph/
+		* https://docs.hyperoracle.io/zkgraph/zkgraph-assemblyscript-lib
+		* https://github.com/messari/subgraphs
+		* https://docs.goldsky.com/indexing/instant-subgraphs
+		* https://thegraph.academy/developers/subgraph-uncrashable/
+
 ## References <a id="references"></a>
 
 * Encode ZK Bootcamp
