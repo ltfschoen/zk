@@ -931,3 +931,14 @@ zk example sudoko
     * Advanced ZK by Extropy https://zkp.ninja/
     * Starknet node
         * https://www.kasar.io/
+    * RISC
+        * [ ] RISC Zero Docs - https://dev.risczero.com/
+        * [ ] RISC Zero Study Club - https://www.youtube.com/playlist?list=PLcPzhUaCxlCjdhONxEYZ1dgKjZh3ZvPtl
+        * [x] RISC zkVM Design Principles - https://www.youtube.com/watch?v=VvYOECJnbEM&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=6
+        * [x] RISC Zero How it Works - https://www.youtube.com/watch?v=8hwY88xJoyM&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=8
+        * Examples
+            * [x] RISC Password - https://www.youtube.com/watch?v=Yg_BGqj_6lg&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=6
+            * [x] RISC Matching JSON - https://www.youtube.com/watch?v=6vIgBHx61vc&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=7
+            * [x] RISC Checkmate - https://www.youtube.com/watch?v=vxqxRiTXGBI&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=9
+        * Extropy.io Examples
+            * [ ] https://github.com/ExtropyIO/ZeroKnowledgeBootcamp/tree/main/risc0/examples
