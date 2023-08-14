@@ -846,7 +846,7 @@ zk example sudoko
 			* Examples for reference (see ./example)
 
 	* Develop new zkGraph provable program by modifying the following in AssemblyScript with source code in ./src
-			* mapping.ts - specifies core data mapping logic of zkGraph (data mapping of off-chain computation logic) of filtering (run in zkWASM) and handling emitted on-chain event data (or setting up calldata of smart contract automation) in AssemblyScript and generation of output state in other forms. The defined data mapping is between zkGraphs in the zkOracle network, and the Meta Apps (zkIndexing, zkAutomation) in a Hyper Oracle zkOracle node. See https://docs.hyperoracle.io/zkgraph/introduction. It is used to execute zkGraph Standards (i.e. zkML https://docs.hyperoracle.io/zkgraph-standards/zkml, zkAutomation, or zkIndexing https://docs.hyperoracle.io/zkgraph-standards/zkindexing), and generate ZKPs in zkWASM)
+        * mapping.ts - specifies core data mapping logic of zkGraph (data mapping of off-chain computation logic) of filtering (run in zkWASM) and handling emitted on-chain event data (or setting up calldata of smart contract automation) in AssemblyScript and generation of output state in other forms. The defined data mapping is between zkGraphs in the zkOracle network, and the Meta Apps (zkIndexing, zkAutomation) in a Hyper Oracle zkOracle node. See https://docs.hyperoracle.io/zkgraph/introduction. It is used to execute zkGraph Standards (i.e. zkML https://docs.hyperoracle.io/zkgraph-standards/zkml, zkAutomation, or zkIndexing https://docs.hyperoracle.io/zkgraph-standards/zkindexing), and generate ZKPs in zkWASM)
 
 	* Interact with zkGraph using API (using ./api, see test.sh)
 
@@ -888,7 +888,7 @@ zk example sudoko
 	* Migrate Subgraphs to zkGraph
 		* Requires just 10 lines of configuration difference. Implementations such as Standardized Subgraph and ecosystem tooling like Instant Subgraph and Subgraph Uncrashable can be used for developing zkGraph.
 
-* Reference:
+* References:
 	* zkGraph API Reference - https://docs.hyperoracle.io/zkgraph-standards/zkgraph
 	* https://docs.hyperoracle.io/zkgraph/develop/1.-zkgraph-studio-ui
 	* https://www.youtube.com/watch?v=1ehlXhwk5eE
