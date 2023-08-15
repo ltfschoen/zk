@@ -816,9 +816,30 @@ zk --version
 zk example sudoko
 ```
 
-### zkWASM
+### zkOracle Nodes (by Hyper Oracle)
 
-#### zkGraph
+#### Introduction
+
+* Traditional Oracles vs zkOracle networks
+    * Traditional Oracles analogy is similar to Optimistic Rollups
+        * Examples of Traditional Oracles
+            * Input Oracles
+                * Chainlink price feeds
+            * Output Oracles
+                * The Graph Protocol
+        * Performance relies on the challenge period or slashing, which may take days or weeks
+    * zkOracle networks (i.e. Hyper Oracle) analogy is similar to ZK Rollups
+        * Note: zkOracle is not a Rollup or L2. See for details https://docs.hyperoracle.io/resources/faq#is-hyper-oracle-a-rollup-or-layer-2
+        * Performance is based on ZK Proof generation time that may be performed in parallel and performed in minutes or seconds. Additional nodes adds redundancy and nearly linearly boosts its performance with parallel proving
+        * zkOracle Nodes
+            * Multiple zkOracle Nodes may target zkPoS as well as each zkGraph. This enables parallel generation of ZK proofs, which can significantly enhance performance.
+            * Only a single zkOracle Node is necessary to be considered decentralised and to maintain network security since the zkOracle network follows the 1-of-N trust model, as defined in [Vitalik Buterin's article on trust models](https://vitalik.ca/general/2020/08/20/trust.html), which only requires one honest node to create a secure network and maintain the network's health and uptime, since zkOracle security is fully based on maths and cryptography and inherits its security from Ethereum that serves as its data source, whereas traditional oracles require redundancy, as mentioned here https://docs.hyperoracle.io/resources/faq#how-data-source-of-zkoracle-is-secured-since-zk-are-only-safeguarding-computation
+        * zkOracle network is censorship-resistant and operates trustlessly without requiring external trust in third-parties
+        * Verification Contracts are used in zkOracle to provide intensive computation that is carried out securely and trustlessly off-chain using ZK and using Verification Contracts.
+            * zkWASM secures off-chain computation. See for details https://docs.hyperoracle.io/resources/faq#what-computation-in-hyper-oracle-is-secured-by-zk
+        * Finality is achieved at the end of the challenge/dispute period (to finalise any disagreement on computation) according to the definition of finality for rollups and when all ZK Proofs are verified, and data becomes fully immutable and constant
+
+#### zkGraph (Mapping)
 
 * zkGraph (offchain smart contract) - based on to The Graph's Subgraph https://thegraph.academy/developers/defining-a-subgraph/\
 	* Deposit Testnet ETH balance
@@ -860,7 +881,7 @@ zk example sudoko
 			* Deploy the WASM file to the Hyper Oracle node zkWASM provider url specified in config.js `CompilerServerEndpoint` for ZKP generation
 		* Execute
 			* Execution the WASM file to process data to get expected output at a specific Block Number and Generate Output State for the zkGraph if `require` used in mapping.ts to verify inputs and conditions before execution returns `true` using Hyper Oracle nodes.
-				* zkAutomation is an automation job that is triggered if all `require` conditiosn are `true`. See https://docs.hyperoracle.io/zkgraph/zkgraph-assemblyscript-lib
+				* zkAutomation is an automation job that is triggered if all `require` conditions are `true`. See https://docs.hyperoracle.io/zkgraph/zkgraph-assemblyscript-lib
 				* zkAutomation is a I/O zkOracle, because the data flows from on-chain (original smart contract event data) to off-chain (zkGraph source) to on-chain (automation triggered).
 
 				* zkAutomation requires specifying their target contract, target function, and source (when to trigger). For more complex trigger conditions, developers can choose to either trigger automation every N-th block (in scenarios like a keeper bot) or use a zkGraph as the off-chain source. https://docs.hyperoracle.io/zkgraph-standards/zkautomation/introduction
@@ -872,6 +893,8 @@ zk example sudoko
 		* Upload zkGraph code and settings to an IPFS Address
 			* zkGraph code files stored in EthStorage (storage scaling layer supported by Ethereum ESP) to guarantee a fully decentralised development pipeline for zkGraph
 		* Deploy the ZK Verifier Contract for the ZKP of the zkGraph to Hyper Oracle testnet (for local testing or fully with zkWASM node)
+            * Verifier Contract Interface - https://github.com/DelphinusLab/halo2aggregator-s/blob/main/sol/contracts/AggregatorVerifier.sol#L40
+                * TODO - does this prove that L2 block transition was correct, batch tx together?? see Lesson 10 slides, like Scroll
 		* Deploy and Register the zkGraph with global on-chain Registry Contract
 
 * Subgraph
@@ -898,6 +921,63 @@ zk example sudoko
 		* https://github.com/messari/subgraphs
 		* https://docs.goldsky.com/indexing/instant-subgraphs
 		* https://thegraph.academy/developers/subgraph-uncrashable/
+
+#### zkWASM (Runtime)
+
+* Inputs received including Block Header and Data Roots to run zkGraphs
+* zkGraph Configuration
+	* Define Customised Data Mappings
+* Operator of zkOracle Node chooses proportion of deployed zkGraphs to execute
+* Execution
+	* Generate ZK Proof of the Operation
+		* Optionally Outsource to decentralised Prover Network
+* Output
+	* Final State
+		* Note: Off-chain data that developers can use through Hyper Oracle Meta Apps (zkGraph Standards) that are Services provided by Hyper Oracle for DApp developers, including zkIndexing and zkAutomation
+		* Data is correct if at least one honest zkOracle node and all ZK Proofs are verified
+	* Final ZK Proof
+		* ZK tech stack used is Halo2 PSE and UltraPLONK https://docs.hyperoracle.io/resources/faq#what-is-the-zk-tech-stack-of-hyper-oracle
+			* Circuit details https://github.com/DelphinusLab/zkWasm#circuit-details
+		* Note: To demonstrate the validity and computation of the data
+* Notes
+	* zkWASM is a zkVM (virtual machine with ZK that generates ZK proofs) with WASM instruction set as bytecode https://docs.hyperoracle.io/resources/glossary#zkwasm
+	* zkWASM is used instead of zkEVM. See for details https://docs.hyperoracle.io/resources/faq#why-zkwasm-not-zkevm
+	* Rollups are a popular Layer-2 scaling solution for Ethereum.
+	* zkEVM is a new type of zk-Rollup that is EVM compatible and secured by ZK Proof (ZKP). ZKP is a cryptographic proof that verifies the transaction data within a zk-Rollup is accurate.
+	* zk-Rollups enhance both the privacy and security of a rollup as the ZKP verifies its transactions so no trust or "optimism" is required. Verify the truth of all the data and transactions in a zk-Rollup with "zero-knowledge", without needing to know the details of every transaction contained within it
+	* Rollups bundle transactions in order to improve blockchain throughput while lowering transaction costs. Rollups "roll up" (combines) a number of transactions from a Layer-1 protocol (a blockchain like Ethereum) and executes them off-chain (not on the primary blockchain) using a Layer-2 protocol such as a sidechain or an EVM-compatible blockchain.
+	* "Optimistic" Rollups (ORs) are assuming (optimistically) that all the transactions in a rollup are valid and not fraudulent. For this reason, there is a challenge/dispute period (typically several days) where one can challenge the validity of a transaction. https://decrypt.co/resources/what-is-zkevm
+
+#### zkPoS (Consensus)
+
+* Fetch Block Headers and Data Roots (including stateRoot, transactionRoot, receiptsRoot, by proving Ethereum consensus with ZK) from Ethereum blockchain trustlessly using zkPoS, and combining zkPoS with use of a secure and decentralised light client such as Helios to retrieve the data we may build a ZK SNARK-based light client that uses off-chain computation to deliver SNARKified block attestation, recursive proof of multiple blocks of Ethereum consensus
+    * Helios https://a16zcrypto.com/building-helios-ethereum-light-client/
+* Generate ZK Proof
+    * Optionally Outsource to decentralised Prover Network
+    * zkPos secures on-chain data source access that is already verified and secured by the base layer blockchain. See
+        * https://docs.hyperoracle.io/resources/faq#what-computation-in-hyper-oracle-is-secured-by-zk
+        * https://docs.hyperoracle.io/resources/faq#how-data-source-of-zkoracle-is-secured-since-zk-are-only-safeguarding-computation
+* Output Block Header and Data Roots to zkWASM
+    * Note: zkPoS is foreign Circuit of zkWASM
+* Note: zkPoS refers to Ethereum's consensus algorithm fully verified with ZK https://docs.hyperoracle.io/resources/glossary#zkpos
+* References
+    * https://docs.hyperoracle.io/resources/faq#what-is-zkpos-exactly
+    * https://docs.hyperoracle.io/technology/core-components/zkpos
+    * https://mirror.xyz/hyperoracleblog.eth/lAE9erAz5eIlQZ346PG6tfh7Q6xy59bmA_kFNr-l6dE
+
+#### zkAutomation
+
+* About https://docs.hyperoracle.io/resources/glossary#zkautomation
+* Benefits - TODO https://docs.hyperoracle.io/technology/comparisons#zkautomation-vs.-other-automation-protocols
+
+#### zkIndexing
+
+* About - https://docs.hyperoracle.io/resources/glossary#zkindexing
+* Benefits - TODO https://docs.hyperoracle.io/technology/comparisons#zkindexing-vs.-other-indexing-protocols
+
+#### zkML
+
+TODO
 
 ## References <a id="references"></a>
 
@@ -960,6 +1040,8 @@ zk example sudoko
     * [zkOracle](https://ethresear.ch/t/defining-zkoracle-for-ethereum/15131)
     * [zkOracle Wiki (another project)](https://zkoracleofficial.gitbook.io/zk-oracle-wiki/)
     * zkWasm - https://github.com/hyperoracle/zkWasm
+    * zkWASM - https://mirror.xyz/hyperoracleblog.eth/abKqUB4iEJ4kRsGqq8baIFUnhV_eY-lblmhCrwRm31E
+    * zkWASM technical - https://jhc.sjtu.edu.cn/~hongfeifu/manuscriptb.pdf
 
 * Elliptic Curves
     * Elliptic Curves - https://www.udemy.com/course/elliptic-curve-cryptography-in-rust/
@@ -1025,3 +1107,5 @@ zk example sudoko
             * [x] RISC Checkmate - https://www.youtube.com/watch?v=vxqxRiTXGBI&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=9
         * Extropy.io Examples
             * [ ] https://github.com/ExtropyIO/ZeroKnowledgeBootcamp/tree/main/risc0/examples
+    * Verkle - https://verkle.dev/
+    * Sequence Diagrams - https://sequencediagram.org/
