@@ -1109,3 +1109,33 @@ TODO
             * [ ] https://github.com/ExtropyIO/ZeroKnowledgeBootcamp/tree/main/risc0/examples
     * Verkle - https://verkle.dev/
     * Sequence Diagrams - https://sequencediagram.org/
+    * Games
+        * ZK ML repo for Cairo https://orion.gizatech.xyz/welcome/readme 
+            * Example game that implements Orion https://github.com/cartridge-gg/drive-ai
+    * EZKL - tutorial to use EZKL in browser with WASM https://docs.ezkl.xyz/tutorials/wasm_tutorial/
+    * Encode ZK Bootcamp July 2023 Cohort Lesson Recordings
+        * Note: Refer to materials folder for Lessons and Homework PDFs
+        * Lesson 1 - Maths and Cryptography Intro - https://youtu.be/zdoqKiap_bg
+        * Lesson 2 - Zero Knowledge Proofs - https://youtu.be/zJjTUtd9h34
+        * Lesson 3 - ZKP System Comparison - https://youtu.be/Zli9goL0dWM
+        * Lesson 4 - Introduction to Starknet - https://youtu.be/6gJuhgMCg-Q
+        * Lesson 5 - Introduction to Cairo - https://youtu.be/CPLiWZmiP2A
+        * Lesson 6 - Confidential Tokens - https://youtu.be/Ky6ElYpVYv0
+            * Confidential tokens and Aztec not Cairo nor Warp
+        * Lesson 7 - Cairo Mini Series (Practical Session) - https://youtu.be/R3jnREBGSjM
+            * Practical tutorial: https://extropy-io.medium.com/cairo-mini-series-4633053173f5
+            * Scarb docs: https://docs.swmansion.com/scarb/docs
+            * Starkli docs: https://book.starkli.rs/installation
+            * Starknet Version: https://docs.starknet.io/documentation/starknet_versions/version_notes/
+            * Cairo by example: https://cairo-by-example.com/
+            * Starknet by example: https://starknet-by-example.voyager.online/
+            * Starknet Faucet: https://faucet.goerli.starknet.io/
+        * Lesson 8 - Noir and Warp - https://youtu.be/JcX3EOg9VvU 
+        * Lesson 9 - Mina - https://youtu.be/lghPTl3rL0k
+        * Lesson 10 - zkEVM Solutions - https://youtu.be/qka88pY6IG0
+        * Lesson 11 - Risc Zero/PLONK - https://youtu.be/ksWnDElMTHo
+        * Lesson 12 - Circom/SNARK Theory - https://youtu.be/d98P7aW38O8
+        * Lesson 13 - Stark theory - https://youtu.be/tJOyUBGfVek
+        * Lesson 14 - Cryptographic Alternatives / Voting Systems - https://youtu.be/r1w2rsLWN0M
+        * Lesson 15 - Identity Solutions, zkML and Oracles - https://youtu.be/H7bdDYtb2H0
+        * Lesson 16 - Auditing / Course Review - https://youtu.be/q0J7I-XvA28
