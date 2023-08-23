@@ -979,6 +979,238 @@ zk example sudoko
 
 TODO
 
+### Axiom
+
+* Intro to ZK
+    * ZK proof is a proof of a computation satisfying:
+        * Succinctness - property where size of proof is constant (or logarithmic) in the size of the computation. Succinctness allows us to compress expensive computations into ZKPs that are computationally cheap to verify. In a ZKP the Prover generates a ZKP of an expensive computation and sends the (constant sized) ZKP to a Verifier. Verifier then runs a cheap constant time verification algorithm on the ZKP (since ZKP is constant sized), and if it passes, the Verifier is assured that the Prover executed the claimed computation truthfully, and has this assurance **without trusting** the Prover, where the precise assurance is of the form under certain cryptographic assumptions, where ___ is true with probability `1 - 2^-100` .
+
+        * ZK - certain inputs or intermediate variables of computation may be hidden from the verifier of the proof, but this property is often not used or turned off in current applications of ZK
+    * Toolkits to Translate NP computations to ZK circuits (i.e. Rust/JavaScript API)
+        * Inputs given are computation-specific
+        * ZK circuit generates a ZK proof
+            * ZK "circuits" are closer in spirit to circuits in hardware chips than normal computer programs (ZK circuits are not specified in a Turing complete language). There are still many improvements to be made in ZK circuit design.
+        * Submit ZK proof to the Verifier
+    * Circuit Design: Arithmetisations
+        * ZK circuit computations are represented as a collection of vectors together with imposed constraints (aka relations) between certain entries in the vectors. In a trustless environment, all entries of the vector can be adversarially selected, and your only safeguards are the constraints you impose on these numbers. So in the following example, if we did not have the last constraint `a + b == c`, then we could supply `c = 0` and all our constraints would still be satisfied.
+            * e.g. computing `1 + 1 = 2`, we could say we have vector `(a, b, c)` and constraints 
+`a == 1, b == 1, a + b == c`
+        * **Arithmetisations** are the different ways to translate a standard computation into such a collection of vectors and constraints.
+            * Custom developer "front-ends" are available with different levels of abstraction and customizability for translating a ZK circuit into an arithmetization. Choosing an arithmetization and a front-end for writing in that arithmetization is the closest thing to choosing a **programming language** in ZK.
+    * Prover-Verifier Dynamic (in a general Off-Chain setting)
+        * Given an arithmetization (vectors + constraints)
+        * Prover-verifier dynamic procedure is "interactive" as follows:
+            * Prover sends the Verifier
+                * commitment to the vectors
+                * commitments (details omitted) to the constraints.
+            * Verifier sends the Prover some random numbers (hence why it is "interactive")
+            * Prover uses the previous commitment, along with some cryptography, to give a proof that the supplied vectors actually satisfies the claimed constraints (computation did what it claimed).
+        * Using ZK SNARKs on-chain on Ethereum? 
+            * Verifier is now a smart contract that runs the algorithm to verify a ZK SNARK supplied by the Prover. This enables powerful modularity and composability: the smart contract can programmatically perform further actions depending on whether the SNARK is verified correctly or not. For more details about how to produce SNARK verifier smart contracts, [see](https://docs.axiom.xyz/transparency-and-security/on-chain-zk-verifiers)
+        * Note: Use non-interactive protocol to make it non-interactive using the [**Fiat-Shamir Heuristic**](https://www.zkdocs.com/docs/zkdocs/protocol-primitives/fiat-shamir/), where the prover does all of their steps first and sends the result to the verifier. The Fiat-Shamir Heuristic allows the verifier to then verify the proof with the same assurance of correctness as if the whole process had been interactive.
+        * Note: **Polynomial Commitments**
+            * Reference: https://docs.axiom.xyz/zero-knowledge-proofs/introduction-to-zk#polynomial-commitments
+            * Commitments are a more expressive hash that pins down the vector so you can't change it later, but still allows you to perform some operations on the hashes which tell you useful information
+            * Commitment of the vectors is an area of active research, where most vector commitments translate a vector into a polynomial (by [Lagrange interpolation](https://en.wikipedia.org/wiki/Lagrange_polynomial)) and work with the polynomial. Then the polynomials currently fall into two categories:
+                * Elliptic curve cryptography used (not quantum-secure, additional assumptions for security, slower runtime)
+                * Hash the polynomials and do sampling (proof sizes are larger, additional [assumptions](https://a16zcrypto.com/snark-security-and-performance/) for security)
+            * [API perspective overview](https://learn.0xparc.org/materials/halo2/miscellaneous/polynomial-commitment/) of Polynomial Commitments
+        * Note:
+            * Choice of which **Polynomial Commitment** scheme to use is extremely important for the performance and security of the entire ZKP process. The speed of proof generation ([step 3 in the prover-verifier dynamic](https://docs.axiom.xyz/zero-knowledge-proofs/introduction-to-zk#prover-verifier-dynamic)) and cost of proof verification hinge upon this choice.
+            * **Performance of ZK circuits** is governed by the laws of math, and polynomial commitment schemes specify which laws apply (analogy to hardware circuits where performance is governed by the laws of physics)
+        * **Polynomial Commitment** 
+            * Reference: Video by Yi Sun https://learn.0xparc.org/materials/halo2/miscellaneous/polynomial-commitment/
+            * Definition: 
+                * General API of a Polynomial Commitment is a cryptographic procedure that allows you to:
+                    * Input Polynomial `P(x)`
+                    * Commitment to the Polynomial `c = Commit(P)` is created by condensing it into a small amount of data
+                    * Send Commitment from Prover to Verifier
+                    * Upon Verifier knowing Commitment
+                    * Prover cheaply construct Proofs of various evaluations of the Polynomial
+                    * e.g. Prover with input point `x0` and evaluation `y0 = P(x0)` sends to the Verifier the values `x0`,`y0` and a Proof, then Verifier assured when verifying with `c` alone that `y0 = P(x0)` 
+            * **Polynomial Commitment scheme** variations all implement these procedures/functions
+                * Setup() - Generates a trusted data called the "setup" pk
+                * Commit(pk, P) - Outputs commitment `c` to `P` (Polynomial), based on inputs `pk` ("setup") and `P`, which is a Pair of functions that commit to a Polynomial
+                * VerifyPoly(pk, c, P) - Verify the commitment is valid. Given a commitment `c` and Polynomial `P`, this function checks if `c` is a valid commitment to `P`
+                * Open(pk, P, x) - Allows prover to generate a proof `PI` for a Polynomial `P` evaluation `y` relative to a commitment Polynomial 
+                Generates a proof PI for y=P(x)
+                * VerifyOpen(pk, c, x, y, PI) - Allows Verifier to check that a claimed evaluation `y=P(x)` of a Polynomial `P` actually corresponds to the true evaluation of the commited Polynomial using proof `PI`
+            * Why do we commit Polynomials?
+                * Encode values of vectors in Polynomials
+                    * e.g. 
+                        * Given vector `(y1,..,yN)` of length `N`
+                        * Encode coordinates of `y` as evaluations of Polynomial `P(x)` at specific values that are `ω^k` (powers of the roots of unity)
+                        * If have root of unity `ω` that has order `K > N + 2` then we can encode the vector in a Polynomial `P(x)`..
+                * Lagange Interpolation used to construct Polynomial `P(x)` in coordinate form if you only know the evaluations
+                * If Polynomial `P(x)` is an encoding of a vector, then the commitments `c = Commit(pk, P)` to that Polynomial `P` may be viewed as commitments to that vector, and;
+                    * commitment `c` allows the Prover to prove coordinates of `y` belong to the originally committed vector (called a "vector commitment"), and;
+                    * "opening" the commitments with `Open` may be viewed as proving the coordinates of the original vector. This allows conversion of any **Polynomial Commitment Scheme** into a **Vector Commitment Scheme** (more obvious how you would use)
+            * Given a committed Polynomial...
+                * If want to check Polynomial `P(x) = 0`
+                    * `Open` the committed Polynomial `c = Commit(pk, P)` at randomly chosen evaluation point `z`, then if the degree of the `P(x)` is sufficiently small, then the chance of landing on the roots of the Polynomial is close to zero
+                    * Therefore may use fact that the opening of its commitment `c` at a random `z` is `0` as a proof that the Polynomial `P` is identically `0`
+            * **KZG Commitment Scheme** @ 8:00 in video
+                * TODO
+
+    * Choose ZK proving Stack and start Building
+        1. Choose Arithmetization to use, along with a developer front-end for writing ZK Circuits in that Arithmetization.
+        2. Choose Polynomial Commitment scheme the Prover/Verifier will use. Often baked into the choice of Arithmetization.
+        3. Find an existing library that generates ZK Proofs from a given Arithmetization, or preferrably roll your own
+* Axiom Stack
+    * [PLONKish Arithmetisation](https://hackmd.io/@aztec-network/plonk-arithmetiization-air) with [Halo2](https://docs.axiom.xyz/zero-knowledge-proofs/getting-started-with-halo2) frontend
+    * [KZG](https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html) Polynomial Commitment scheme
+    * Privacy Scaling Explorations [fork](https://github.com/privacy-scaling-explorations/halo2) of Halo2 backend, supporting KZG commitments
+* Overhead
+    * Proof size and proof verification time are constant
+    * Runtime to generate a proof is not constant
+    * Estimated overhead of generating a proof for a particular computation is around 100-1000x now. This is an active engineering problem with many facets for improvement:
+        * Improving circuit design - this involves finding the optimal way to translate a Computation into an Arithmetization.
+        * General performance engineering - some of the open-source code used for proof generation was developed for other purposes, and serious performance optimization has not been applied yet.
+        * Choice of proving system: the combination of Arithmetization and Polynomial Commitment scheme forms a proving system. New research in this area can lead to step change improvements in performance.
+    * Hardware: many core algorithms (Fast Fourier Transform, Elliptic Curve Multiscalar Multiplication) involved in the polynomial commitments can be parallelized or otherwise optimized using GPUs, FPGAs, ASICs.
+* VM / Turing Completeness
+    * ZK circuits in their purest form are not Turing complete (you cannot have recursive functions or infinite loops). They do not behave like general purpose VM we are used to (e.g., LLVM). For example, the notion of an "if" statement is very different: assuming boolean a, to replicate
+        ```
+        if a:
+            f(b)
+        else:
+            g(b)
+        ```
+    * ZK circuits need to compute both `f(b)` and `g(b)` then return `a * f(b) + (1 - a) * g(b)` (assuming `a` is either `0` or `1`). 
+    * ZK circuits may be used to build general or customized VMs using the principles of recursion and aggregation of ZK circuits. For example, to create a ZKP of `f(g(x))`, you would create ZKP `A` for `y == g(x)` and then a ZKP `B` that verifies the proof `A`: `y == g(x)` and further computes `f(y)`. See [here](https://0xparc.org/blog/groth16-recursion)
+* Numerical Architecture
+    * Difference between traditional compute and all ZK circuits is that in a numerical system the compute is applied on top of. In traditional architecture, we work in the world of bits: numbers are uint32, uint64, int32, int64, etc. Meanwhile, due to the cryptographic underpinnings behind ZK, all ZK circuits involve modular arithmetic, i.e., numbers are element in a finite field. This usually means there is a special prime number p, and then all operations are performed modulo p. This difference means that:
+        * Operations that are cheap for bits (bit shifts, AND, XOR, OR) are expensive to implement in ZK.
+        * ZK circuits still need to be implemented in traditional architectures, the implementation of things like finite field arithmetic adds another layer of overhead to all computations. There are continual developments to overcome this challenge, such as ZK friendly [Poseidon hashes](https://eprint.iacr.org/2019/458.pdf) or using "lookup tables" for ZK-unfriendly operations, but for now it is still a source of difficulties for performance and development.
+
+* ZK Proof process
+    * **Read** ZK proofs trustlessly with Axiom from Ethereum on-chain data encoded in block headers, states, transactions, and receipts in any historical Ethereum block that an archive node may access
+    * **Compute**: After injesting data, Axiom applies verified compute primitives on top using diverse operations shown below, and then ZK proofs verify the validity of each of the below computations. ZK proofs verification means results from Axiom have security cryptographically equivalent to that of Ethereum. and make no assumptions about crypto-economics, incentives, or game theory, to offer the highest possible level of guarantee for smart contract applications
+        * basic analytics (sum, count, max, min)
+        * cryptography (signature verification, key aggregation)
+        * machine learning (decision trees, linear regression, neural network inference)
+    * **Verify**: Each query result is accompanied by an Axiom ZK validity proof confirming the following, and then the ZK proof is verified on-chain in the Axiom smart contract, with the final result then trustlessly available for use in your smart contract
+        * input data was correctly fetched from the chain
+        * compute was correctly applied
+
+* Axiom Architecture
+    * Reference: https://docs.axiom.xyz/protocol-design/architecture-overview
+    * `AxiomV1` - a cache of Ethereum block hashes starting from genesis by:
+        * Smart Contract - https://github.com/axiom-crypto/axiom-v1-contracts/blob/main/contracts/AxiomV1.sol
+        * About
+            * smart contract that caches block hashes from Ethereum history
+            * allows user smart contracts to verify the historic block hashes against the cache
+        * Details
+            * store **Keccak Merkle roots** as cache in `historicalRoots`, stored in groups of 1024 consecutive block hashes (start block is a multiple of 1024), where the Merkle roots are kept updated by ZK proofs which verify that hashes of block headers form a commitment chain that ends in either one of the 256 most recent blocks directly accessible to the EVM, or a blockhash already present in the `AxiomV1` cache.
+                * **Update** cache by calling functions:
+                    * `updateRecent` - verify a ZK proof that proves the block header commitment chain is correct and update `historicalRoots` accordingly. the ZK proof checks that each parent hash is in the block header of the next block, and that the block header hashes to the block hash.
+                    * `updateOld` - verify a ZK proof that proves the block header commitment chain is correct, where block startBlockNumber + 1024 must already be cached by the smart contract. This stores a single new Merkle root in the cache.
+                    * `updateHistorical` - similar to as `updateOld` except it uses a different ZK proof to prove the block header commitment chain from. It requires block `startBlockNumber + 2 ** 17` to already be cached by the smart contract. This stores `2 ** 7 = 128` new Merkle roots in the cache
+                * each function to update the Merkle root emits event `UpdateEvent`
+
+            * store a Merkle Mountain Range (MMR) of these Merkle roots starting from the genesis block, where the MMR is constructed on-chain with updates to the **Keccak Merkle roots** in the first portion of the cache. this allows access to block hashes across large block ranges. `AxiomV1` stores historic block hashes in a second redundant form by maintaining a MMR of the Merkle roots cached in `historicalRoots`. The latest MMR is stored in `historicalMMR`.
+                * **Update** `historicalMMR` by using `updateRecent` and `appendHistoricalMMR`
+                * cache commitments to recent values of `historicalMMR` in the ring buffer `mmrRingBuffer` to facilitate asynchronous proving against a MMR, which may be updated on-chain during proving
+
+            * `isBlockHashValid` method verifies that `merkleProof` is a valid Merkle path for the relevant block hash and checks that the Merkle root lies in the cache (verify block hashes against Merkle roots in the cache). It requires users to provide a witness that a block hash is included in the cache and is formatted via `struct BlockHashWitness`
+            * `mmrVerifyBlockHash` function verifies block hashes against a cached Merkle mountain range
+
+            * **Read** from cache may be achieved by accessing commitments to the entire cache simultaneously, where users may access recent MMRs in `mmrRingBuffer`.  This is primarily used for fulfillment of queries by `AxiomV1Query`, but users may also access it for their own purposes
+
+    * `AxiomV1Query` - **Axium Query Protocol** uses this smart contract which allows users to query arbitrary block header, account, and storage data from the history of Ethereum. It fulfills batch queries against `AxiomV1` for trustless access to arbitrary data from historic Ethereum block headers, accounts, and account storage.
+        * Queries may be submitted on-chain and are fulfilled on-chain with ZK proofs that are verified on-chain against the block hashes cached in `AxiomV1`, where query results are verified on-chain with ZK proofs of validity, where the ZK proofs check that the relevant on-chain data either lies directly in a block header or lies in the account or storage trie of a block by proving verification of Merkle-Patricia trie inclusion (or non-inclusion) proofs.
+
+            * **Initiate Queries**
+                * Initiate a query into Axiom with either on- or off-chain data availability using the following functions in `AxiomV1Query`. Each query request must be accompanied by an on-chain payment which is collected upon fulfillment.  The minimum payment allowed is specified by `minQueryPrice` in `AxiomV1Query` and is initially set to 0.01 ETH. If a query is not fulfilled by a pre-specified deadline, anyone can process a refund for a query specified by `keccakQueryResponse` to the pre-specified refundee by calling `collectRefund`.
+                    * `sendQuery` - Request a proof for `keccakQueryResponse`. This allows the caller to specify a `refundee` and also provide on-chain data availability for the query in `query`
+                    * `sendOffchainQuery` - Request a proof for `keccakQueryResponse`. This allows the caller to specify a `refundee` and also provide off-chain data availability for the query in `ipfsHash`.
+
+            * **Fulfilling Queries**
+                * **Verification**
+                    * Queries are fulfilled by submitting a ZK proof that verifies `keccakQueryResponse` against the cache of block hashes in `AxiomV1`. Fulfillment has been permissioned to the `PROVER_ROLE` for safety at the moment. Both of the following fulfillment functions use the verifier deployed at `mmrVerifierAddress` to verify a ZK proof of the query result. See [here](https://docs.axiom.xyz/protocol-design/axiom-query-protocol#fulfilling-queries) for the list of public inputs/outputs responses of the ZK proof
+                        * `fulfillQueryVsMMR` allows a prover to supply a ZK proof which proves `keccakQueryResponse` was correct against the MMR stored in index `mmrIdx` of `AxiomV1.mmrRingBuffer`. The prover must also pass some additional witness data in `mmrWitness` and the ZK proof itself in `proof`. The prover can collect payment to `payee`.
+                        * `verifyResultVsMMR` allows a prover to prove a `keccakQueryResponse` without on-chain query request.
+                * **Post-Verification**
+                    * the smart contract uses the additional witness data in `mmrWitness` to check that `historicalMMRKeccak` and `recentMMRKeccak` are consistent with the on-chain cache of block hashes in `AxiomV1` by checking the following, and if all checks pass, the fulfilled results `keccakQueryResponse` and `poseidonQueryResponse` are stored in `verifiedKeccakResults` and `verifiedPoseidonResults`.
+                        * `historicalMMRKeccak` appears in index `mmrIndex` of `AxiomV1.mmrRingBuffer`.
+                        * `recentMMRKeccak` is either committed to by an element of `AxiomV1.historicalRoots` or is an extension of such an element by block hashes accessible to the EVM.
+                * **Reading Verified Query Results**
+                    * Axiom supports reading block, account, and storage data from verified query results via:
+                        * `areResponsesValid` - check whether queries into block, account, and storage data have been verified. Each query is specified by:
+                            * `BlockResponse` - The `blockNumber` and `blockHash` as well as a Merkle proof `proof` and leaf location `leafIdx` in `keccakBlockResponse`.
+                            * `AccountResponse` - The `blockNumber`, `addr`, `nonce`, `balance`, `storageRoot`, and `codeHash` as well as a Merkle proof `proof` and leaf location `leafIdx` in `keccakAccountResponse`.
+                            * `StorageResponse` - The `blockNumber`, `addr`, `slot`, and `value` as well as a Merkle proof `proof` and leaf location `leafIdx` in `keccakStorageResponse`.
+                    * Raw query results may also be accessed using:
+                        * `isKeccakResultValid` - Check whether a query consisting of `keccakBlockResponse`, `keccakAccountResponse`, and `keccakStorageResponse` has already been verified.
+                        * `isPoseidonResultValid` - Check whether a query consisting of `poseidonBlockResponse`, `poseidonAccountResponse`, and `poseidonStorageResponse` has already been verified
+        * ZK Circuits underlying historic Axiom data Queries
+            * About:
+                * Axiom proves in ZK that historic Ethereum on-chain data is committed to in block headers of the corresponding Ethereum block. The structure of this commitment and how Axiom uses ZK circuits to prove the commitment are shown below
+            * **Account and Storage Proofs**
+                * Account and account storage data is committed to in an Ethereum block header via several Merkle-Patricia tries. **Inclusion proofs** for this data into the block header are provided by **Ethereum light client proofs**.  For example, consider the value at storage slot `slot` for address `address` at block `blockNumber`. **Light client proof** for this value is available from the `eth_getProof` JSON-RPC call and consists of:
+                    * block header at block `blockNumber` and in particular the `stateRoot`.
+                    * account proof of Merkle-Patricia inclusion for the key-value pair `(keccak(address)`, `rlp([nonce, balance, storageRoot, codeHash]))` of the RLP-encoded account data in the state trie rooted at `stateRoot`.
+                    * storage proof of Merkle-Patricia inclusion for the key-value pair `(keccak(slot), rlp(slotValue))` of the storage slot data in the [storage trie](https://ethereum.org/en/developers/docs/data-structures-and-encoding/patricia-merkle-trie/#storage-trie) rooted at `storageRoot`.
+                * Verifying this **light client proof** against a block hash `blockHash` for block `blockNumber` requires checking:
+                    * block header - is properly formatted, has Keccak hash `blockHash`, and contains `stateRoot`.
+                    * state trie proof - is properly formatted, has key `keccak(address)`, Keccak hashes of each node along the Merkle-Patricia inclusion proof match the appropriate field in the previous node, and has value containing `storageRoot`.
+                    * storage trie - similar validity check for its Merkle-Patricia inclusion proof
+        * ZK Circuits underlying historic Account and Storage Proofs
+            * Axiom verifies **light client proofs** in ZK using the open-source [axiom-eth](https://github.com/axiom-crypto/axiom-eth/) ZK circuit library, which supports operations in ZK shown listed [here](https://docs.axiom.xyz/protocol-design/zk-circuits-for-axiom-queries#zk-circuits-for-account-and-storage-proofs), where the end result of these are ZK circuits for block headers, accounts, and account storage, which prove validity of the block, account, and storage statements, and when combined together these circuits give ZK Circuits for Account and Storage Proofs
+        * Aggregating ZK Proofs in Queries
+            * Fulfilling queries into Axiom with ZK proofs verified against MMRs cached in `AxiomV1`, requires combining ZK Circuits for Account and Storage Proofs from the previous section with ZK Circuits verifying Merkle inclusion proofs into MMRs.
+            * ZK proofs are generated for a query in the [Axiom Query Format](https://docs.axiom.xyz/developers/sending-a-query/axiom-query-format), where the ZK proofs are of:
+                * Merkle inclusion proofs of each block hash in a MMR in the format cached in `AxiomV1`.
+                * Proofs of the `stateRoot` in the block header committed to in each block hash.
+                * Account proofs for each queried account relative to its stateRoot which in particular establishes the `storageRoot` of the account.
+                * Storage proofs for each queried storage slot relative to its `storageRoot`.
+                * Consistency between the block hashes, state roots, and storage roots referenced in the four previous proofs.
+            * Verify ZK proofs on-chain
+                * Reference: https://docs.axiom.xyz/transparency-and-security/on-chain-zk-verifiers
+                * ZK proof aggregation may then be used with the [snark-verifier](https://github.com/axiom-crypto/snark-verifier/) library (uses Halo 2, Plonk) developed by the [Privacy Scaling Explorations](https://github.com/privacy-scaling-explorations/snark-verifier) group at the Ethereum Foundation are the specialized smart contracts that Axiom uses that are programmatically generated in Yul code for each SNARK, to aggregate these ZK proofs and verify any given ZK circuits on-chain. See [on-chain ZK verifiers](https://docs.axiom.xyz/transparency-and-security/on-chain-zk-verifiers) for a list of the deployed on-chain verifiers used in Axiom.
+            * Compiling ZK Circuits to On-Chain Verifiers
+                * Record the Rust command using the [snark-verifier](https://github.com/axiom-crypto/snark-verifier/) library which generates each of the on-chain ZK circuit verifiers below
+                    * `AxiomV1` Verifier (AxiomV1Core SNARK Verifier)
+                        * Yul generation command (to create this SNARK)
+                            ```bash
+                            cargo run --bin header_chain --release -- --start 0 --end 1023 --max-depth 10 --initial-depth 7 --final evm --extra-rounds 1 --calldata --create-contract
+                            ```
+                    * `AxiomV1` Historical Verifier
+                        * Yul generation command
+                    * `AxiomV1Query` Verifier 
+                        * Yul generation command
+            * Deployed Verifier Contracts
+                * Yul source code for each verifier contract deployed in production is listed on [Github](https://github.com/axiom-crypto/axiom-v1-contracts/tree/main/snark-verifiers).
+                * Generate bytecode for deployment using the following command with solc Version: 0.8.19. The Yul contracts compiling to bytecodes may be deployed and viewed on Etherscan
+                    ```
+                    solc --yul <YUL FILE> --bin | tail -1 > <BYTECODE FILE>
+                    ```
+            * Checking Verifiers are not Metamorphic
+                * In `AxiomV1` and `AxiomV1Query`, each of these verifiers are subject to a timelock upgrade guarantee as detailed in [Guardrails](https://docs.axiom.xyz/protocol-design/guardrails) where there are three admin permissioned roles: `PROVER_ROLE`, `GUARDIAN_ROLE`, and `TIMELOCK_ROLE`.
+                * Verify on each upgrade that the bytecode for verifier contracts above does not contain `DELEGATECALL` or `SELFDESTRUCT` opcodes, to ensure that this timelock guarantee cannot be bypassed by a metamorphic contract attack.
+                * Verifying the absence of these potentially problematic opcodes is possible either directly from the bytecode view on Etherscan or using tools such as metamorphic-contract-detector or evmdis.  For convenience, we have integrated the latter to perform this check automatically in our Github CI for the axiom-v1-contracts repo [here](https://github.com/axiom-crypto/axiom-v1-contracts/blob/main/.github/workflows/foundry.yml#L95).
+
+* Axiom SDK
+    * Process
+        * Initialize Axion SDK
+            * Configure JSON-RPC provider and chainId (i.e. Goerli)
+            * TODO - in progress
+
+* Integrate Axiom
+    * Axiom Alpha release live on mainnet may be used to trustlessly query historic Ethereum block headers, accounts, and account storage from your smart contract, and then use trustless compute primitives over this verified data.
+
+* TODO
+    * try Axiom alpha release to query historic block data from a smart contract
+    * if get early partner access try to use trustless compute primitives over this verified data
+    * review axiom-eth that is used by Axiom to verify **light client proofs** in ZK https://github.com/axiom-crypto/axiom-eth/
+    * watch [API perspective overview](https://learn.0xparc.org/materials/halo2/miscellaneous/polynomial-commitment/) of Polynomial Commitments
+    * halo2 frontend https://docs.axiom.xyz/zero-knowledge-proofs/getting-started-with-halo2
+    * kzg polynomial commitments https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html
+    * recursive ZK SNARKS https://0xparc.org/blog/groth16-recursion
+    * ZKPs without math https://blog.cryptographyengineering.com/2014/11/27/zero-knowledge-proofs-illustrated-primer/
+    * Vitalik post on QAPs, a math-y intro that gives a better flavor of how ZK works, uses arithmetization known as R1CS https://medium.com/@VitalikButerin/quadratic-arithmetic-programs-from-zero-to-hero-f6d558cea649
+    * Poseidon ZK hashes https://eprint.iacr.org/2019/458.pdf
+
 ## References <a id="references"></a>
 
 * Encode ZK Bootcamp
@@ -1077,6 +1309,7 @@ TODO
     * Recursive zk
         * https://medium.com/@rishotics/nova-based-folding-of-verifiable-ai-zkml-circuits-fdfdfd508736
         * https://zkresear.ch/t/folding-endgame/106
+        * Recursive zkSNARKS https://0xparc.org/blog/groth16-recursion
     * zk examples
         * https://www.proofoftrack.xyz/p/proof-of-track-2023-06-29
     * Georgios Konstantopoulos links
@@ -1108,6 +1341,8 @@ TODO
         * Extropy.io Examples
             * [ ] https://github.com/ExtropyIO/ZeroKnowledgeBootcamp/tree/main/risc0/examples
     * Verkle - https://verkle.dev/
+    * Ethereum
+        * [How ZK Rollups publish transaction data on Ethereum](https://ethereum.org/en/developers/docs/scaling/zk-rollups/#how-zk-rollups-publish-transaction-data-on-ethereum)
     * Sequence Diagrams - https://sequencediagram.org/
     * Games
         * ZK ML repo for Cairo https://orion.gizatech.xyz/welcome/readme 
@@ -1139,3 +1374,4 @@ TODO
         * Lesson 14 - Cryptographic Alternatives / Voting Systems - https://youtu.be/r1w2rsLWN0M
         * Lesson 15 - Identity Solutions, zkML and Oracles - https://youtu.be/H7bdDYtb2H0
         * Lesson 16 - Auditing / Course Review - https://youtu.be/q0J7I-XvA28
+        * Tenderly - https://dashboard.tenderly.co/module/encode-tenderly-2023-9?coupon=promo_1MycUgK1YE4Y6l3sOcrGiL07
