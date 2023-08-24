@@ -1041,7 +1041,7 @@ TODO
                         * Given vector `(y1,..,yN)` of length `N`
                         * Encode coordinates of `y` as evaluations of Polynomial `P(x)` at specific values that are `ω^k` (powers of the roots of unity)
                         * If have root of unity `ω` that has order `K > N + 2` then we can encode the vector in a Polynomial `P(x)`..
-                * Lagange Interpolation used to construct Polynomial `P(x)` in coordinate form if you only know the evaluations
+                * Lagrange Interpolation used to construct Polynomial `P(x)` in coordinate form if you only know the evaluations
                 * If Polynomial `P(x)` is an encoding of a vector, then the commitments `c = Commit(pk, P)` to that Polynomial `P` may be viewed as commitments to that vector, and;
                     * commitment `c` allows the Prover to prove coordinates of `y` belong to the originally committed vector (called a "vector commitment"), and;
                     * "opening" the commitments with `Open` may be viewed as proving the coordinates of the original vector. This allows conversion of any **Polynomial Commitment Scheme** into a **Vector Commitment Scheme** (more obvious how you would use)
