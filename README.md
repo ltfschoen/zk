@@ -1434,7 +1434,9 @@ TODO
             * Example game that implements Orion https://github.com/cartridge-gg/drive-ai
     * EZKL - tutorial to use EZKL in browser with WASM https://docs.ezkl.xyz/tutorials/wasm_tutorial/
     * Encode ZK Bootcamp July 2023 Cohort Lesson Recordings
+        * Hacker Pack links: https://encodeclub.notion.site/ZK-Bootcamp-July-2023-157fcb1fa18d44eaa5d7c29df74ea074
         * Note: Refer to materials folder for Lessons and Homework PDFs
+        * Chat: Discord https://discord.gg/encodeclub (ZK Bootcamp Q3 2023)
         * Lesson 1 - Maths and Cryptography Intro - https://youtu.be/zdoqKiap_bg
         * Lesson 2 - Zero Knowledge Proofs - https://youtu.be/zJjTUtd9h34
         * Lesson 3 - ZKP System Comparison - https://youtu.be/Zli9goL0dWM
