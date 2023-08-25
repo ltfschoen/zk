@@ -1271,7 +1271,7 @@ TODO
     * Building off the existing JSON-RPC standard
     * JSON-RPC (standard API that execution layer clients expose to users) level used to design The Portal Network, like what Alchemy exposes, and that Metamask is calling into, so The Portal Network is not creating Wallet interfaces for users (where user testing would be done) even though they are user-focused, but they are building Clients that consume the JSON-RPC API (low-level computers talking to computers)
 * Exclusions
-    * JSON-RPC Debug endpoints since heavier data access required 
+    * JSON-RPC Debug and Trace endpoints `trace_*`` or `debug_*` like archive node since heavier data access required 
         * Focus is on human-driven wallet interactions
 * Example
     * Balance Query using The Portal Network
@@ -1304,11 +1304,6 @@ TODO
 ## References <a id="references"></a>
 
 * Encode ZK Bootcamp
-    * Lessons
-        * [x] Introductory Reading
-        * [x] Lesson 1 recording https://youtu.be/zdoqKiap_bg
-        * [ ] Lesson 2 recording https://youtu.be/zJjTUtd9h34
-        * [ ] Lesson 3 recording https://youtu.be/Zli9goL0dWM
     * ZKP
         * [x] ZKP Primer Part 1 of 2 https://blog.cryptographyengineering.com/2014/11/27/zero-knowledge-proofs-illustrated-primer/
         * [ ] ZKP Primer Part 2 of 2 https://blog.cryptographyengineering.com/2017/01/21/zero-knowledge-proofs-an-illustrated-primer-part-2/
@@ -1465,3 +1460,11 @@ TODO
         * Lesson 15 - Identity Solutions, zkML and Oracles - https://youtu.be/H7bdDYtb2H0
         * Lesson 16 - Auditing / Course Review - https://youtu.be/q0J7I-XvA28
         * Tenderly - https://dashboard.tenderly.co/module/encode-tenderly-2023-9?coupon=promo_1MycUgK1YE4Y6l3sOcrGiL07
+        * (Tellor) Decentralised Oracles - https://youtu.be/rBadlmVA9bk
+        * (Marlin) Serverless Backends - https://youtu.be/68Yg0dZjiNA
+        * (Tenderly) The all-in-one web3 development platform - https://youtu.be/Zes5hgTbFss
+        * (Pocket Network) Decentralised Infrastructure - https://youtu.be/aD6uAl8ie_c
+        * (Axiom) Unlocking Compute and Historical Data Access in Smart Contracts with ZK - https://youtu.be/5ORq9PSLhQs
+        * (Taiko Labs) ZK Testing - https://youtu.be/DBHrV1_sMIQ
+        * (Chainlink) Automation Overview - https://youtu.be/P9iR2fslj9o
+        * (Encode) Careers in Web3 - https://youtu.be/tOvA6zi614k
