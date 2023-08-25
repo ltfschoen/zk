@@ -1199,8 +1199,8 @@ TODO
 * Integrate Axiom
     * Axiom Alpha release live on mainnet may be used to trustlessly query historic Ethereum block headers, accounts, and account storage from your smart contract, and then use trustless compute primitives over this verified data.
 
-* TODO
-    * try Axiom alpha release to query historic block data from a smart contract
+* TODO - Axiom
+    * [ ] try Axiom alpha release to query historic block data from a smart contract
     * if get early partner access try to use trustless compute primitives over this verified data
     * review axiom-eth that is used by Axiom to verify **light client proofs** in ZK https://github.com/axiom-crypto/axiom-eth/
     * watch [API perspective overview](https://learn.0xparc.org/materials/halo2/miscellaneous/polynomial-commitment/) of Polynomial Commitments
@@ -1210,6 +1210,96 @@ TODO
     * ZKPs without math https://blog.cryptographyengineering.com/2014/11/27/zero-knowledge-proofs-illustrated-primer/
     * Vitalik post on QAPs, a math-y intro that gives a better flavor of how ZK works, uses arithmetization known as R1CS https://medium.com/@VitalikButerin/quadratic-arithmetic-programs-from-zero-to-hero-f6d558cea649
     * Poseidon ZK hashes https://eprint.iacr.org/2019/458.pdf
+
+### The Portal Network
+
+* About - Lightweight access to the Ethereum Protocol
+* Problems - Existing clients (infrastructure that serves Ethereum Protocol not users) don't provide what is necessary to delivery lightweight protocol access
+* Existing clients
+    * Full node - heavy + decentralized (high CPU use for EVM execution + tx pool, high store 250GB history, 50GB canonical indices, 175GB state)
+    * Portal Client - light + decentralized + [distributed](https://youtu.be/0stc9jnQLXA?feature=shared&t=499)
+        * Homogeneous network, all participants are a clients + server
+        * A protocol, not a single client, with multiple client reference implementations (Trin, Ultralight, Fluffy)
+        * More nodes = more powerful it gets
+        * Multiple could be embeddable, so could baked Client right into an Application so it runs in background and for example Metamask could connect to it
+
+        * Currently "Sequential" queries so multiple round-trips of JSON-RPC requests and total latency increases 
+            * e.g. ERC-20 balanceOf, need to download smart contract, starts executing, then access state database
+        * Future Innovation
+            * Individual Light Clients in The Portal Network might: 
+                * "Concurrent or Batch" queries so single round-trip to lookup data, parallelise at networking level
+        * ZK in Light Clients using The Portal Network
+            * Unknown status
+        * L2 use with Light Clients for cheap operations
+            * Unknown status
+        * Light Client freeloaders/act maliciously (fake and do not work, or increase fan speed high)
+            * No plans for them to prevent this, its attackable (which would mean its working and ready to fine-tune), since The Portal Network is not core infrastructure at the protocol level, since the Ethereum Protocol does not depend on The Portal Network for anything
+            * Too many freeloaders would degrade performance for all
+    * LES Light Client - light + decentralized + no incentive to run it, just costs, purely taking from network by design
+        * Degenerative since adding more nodes takes up limited capacity, and degrades service for all
+    * Infura, Alchemy - light + centralized (risk of correlate IP with txs, selling your data, server down all stops working)
+* Goals
+    * Allows lightweight and resource constrained devices (i.e. raspberry pi, phones) to participate
+    * Traditional execution layer client data load needs to be spread out to all the participants in network in even way
+    * Remove height restrictions (hardware restrictions) that prevent you from joining the network
+    * Devp2p network that supports execution layer clients currently only allow participants that hold all the state, and all the history, and sufficient processing power to process every block, and run the tx mempool
+    * Client to network should be able to tune parameters dictating how much storage space and processing power the network will ask of you
+    * UX elimination of long sync times so bearable for users so traffic doesn't all go to Infura and Alchemy
+    * The Portal Network has designed a system where for a given head of the chain all data is accessible to you in seconds to minutes after peering, but not hours
+    * Scalable to millions of network participant nodes (not TPS or sharding)
+        * Previous LES light client didn't deliver on its goal as it existed in a client/server architecture
+            * LES Nodes are dependent on Full Nodes serving them data
+            * Problem is Full Node overwhelmed by LES Nodes with expensive queries for information
+            * Issue is due to imbalance existing between client/server 
+* Solution
+    * Storage networks, partitioned from each other, specialised (5 OFF) - serve all data necessary for interacting with Ethereum Protocol
+        * 1. Beacon Light Client - Beacon chain light protocol data
+            * 2022 - After History Network
+            * Data Types (3 OFF) - minimal objects required to jump to head of the Beacon Chain in The Portal Network
+                * Light client update objects
+                * ?
+                * ?
+        * 2. State Network - Account and Contract storage
+            * 2023
+        * 3. Transaction Gossip - lightweight Mempool
+            * 2023
+        * 4. History network - Headers, block bodies, receipts
+            * 2022 - Imminently operational
+        * 5. Canonical Txn Index - TxHash > Hash, Index
+            * 2023
+* Design
+    * Building off the existing JSON-RPC standard
+    * JSON-RPC (standard API that execution layer clients expose to users) level used to design The Portal Network, like what Alchemy exposes, and that Metamask is calling into, so The Portal Network is not creating Wallet interfaces for users (where user testing would be done) even though they are user-focused, but they are building Clients that consume the JSON-RPC API (low-level computers talking to computers)
+* Exclusions
+    * JSON-RPC Debug endpoints since heavier data access required 
+        * Focus is on human-driven wallet interactions
+* Example
+    * Balance Query using The Portal Network
+        * Uses 3 OFF networks from The Portal Network
+            * Traditional approach - Client reads from local DBs
+                * `eth_getBalance` <-> JSON-RPC Server
+                    * <-> DB - Canonical Index
+                        * Go into index to see what the Client thinks the head of the chain is
+                    * <-> DB - Header Storage
+                        * Look up the header in whatever database its stored in
+                    * <-> DB - State
+                        * Look for field in header to get state root, then read into State Database to get you account balance
+            * The Portal Network approach - Client reaches out 3 OFF networks from The Portal Network to get samples of data before returned to user
+                * `eth_getBalance` <-> JSON-RPC Server
+                    * <-> DB - Beacon Light Protocol Network
+                        * Tracks head of chain that provides Beacon Light Protocol data. 
+                    * <-> DB - History Network
+                        * Look up the header in in History Network where its stored
+                            * Stores all historical block bodies, headers, receipts
+                    * <-> DB - State Network
+                        * Lookup relevant state root, then reach into State Network for that state to get you account balance
+* Project Status (of The Portal Network)
+    * Research complete
+    * Building
+* Client Implementations of The Portal Network
+    * Trin - Rust, by EF Piper team - https://github.com/ethereum/trin
+    * Ultralight - JS, by EF
+    * Fluffy - by Nimbus team, run by Status network
 
 ## References <a id="references"></a>
 
