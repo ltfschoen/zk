@@ -1301,6 +1301,135 @@ TODO
     * Ultralight - JS, by EF
     * Fluffy - by Nimbus team, run by Status network
 
+#### Ultralight (TypeScript implementation of Portal Network) review
+
+* README.md says to run `npm run start-cli`, which runs the script `"start-cli": "npm run dev -w=cli` of the package.json in the project root folder, which runs the workspace named `cli` in packages/cli/package.json, and runs its script `"dev": "npx nodemon --esm src/index.ts -- --bindAddress=127.0.0.1:9000 --pk=0x0a27...80e --dataDir='./dist/data'",`
+
+* package/cli/src/index.ts, which interprets the CLI arguments that were passed, where it says:
+  * `bindAddress` is initial IP address and UDP port to bind to
+  * `pk` is the base64 string encoded protobuf serialized private key
+  * `dataDir` is the data directory where content is stored
+    * TODO - what 'content' is it referring to?
+
+  * It then runs a `main` function that gets the local host IP address, and if the CLI argument `rpcAddr` wasn't provided then it uses the localhost IP address as the "HTTP-RPC server listening interface address"
+
+  * Create Portal Network instance where configuration includes:
+    * Sets the libp2p PeerId with the `pk` CLI argument value, or otherwise generates a new elliptic Curve Secp256k1 key pair
+    * Creates a cryptographically signed ENR Ethereum Node Record https://eips.ethereum.org/EIPS/eip-778 from the libp2p PeerId
+    * Sets the ENR's multi address to `/ip4/${ip}/udp/${args.rpcPort}`, where the default `rpcPort` HTTP-RPC server listening port is `8545`
+    * Sets up Metrics using package/cli/src/metrics.ts:
+      * qty peers in discv5 routing table
+      * ...
+      * db size
+    * Creates Portal Network DB using Level https://www.npmjs.com/package/level with storage in `dataDir`
+
+    * Add support for Protocol Ids including: HistoryNetwork, BeaconLightClientNetwork
+  * Creates a Metrics Server (if CLI arg toggles on Prometheus metrics reporting) using http library that is included with Node.js https://nodejs.org/api/http.html
+  * Adds CLI args of bootnodes to the Portal Network instance if they start with `enr:-`
+
+  * Creates a Bridge to Ethereum Client full node running locally to import block headers using CLI arg `web3` that contains the web3 JSON RPC HTTP endpoint by connecting with Web3 JSON-RPC 2.0 client
+    * Uses Jayson library https://www.npmjs.com/package/jayson as the Web3 JSON-RPC 2.0 Client (it can also be a Server)
+
+  * Creates an JSON-RPC server with HTTP endpoint if `rpc` CLI arg is `true` and that supports JSON-RPC methods of the Portal Network instance RPC modules including discv5, eth, portal, ultralight, and web3 that are in the packages/cli/src/rpc/modules folder 
+    * Uses Jayson library https://www.npmjs.com/package/jayson as the Web3 JSON-RPC 2.0 Server (it can also be a Client)
+    * Note:
+      * Requests may be received for History Network with a content type, where data is stored in DB using `addContentToDB` as a hex value where four characters are the content key, associated with a block hash
+
+  * Note: packages/cli/scripts/ contains lots of tests of the functionality
+
+* packages/browser-client
+  * About:
+    * Ultralight Block Explorer
+      * Able to start an Ultralight Portal Network Client in-browser leveraging UDP proxy service (or an Android mobile app) to connect to other nodes in the network and retrieve blocks from the History Network.
+  * Proxy
+    * Client application like Ultralight Portal Network Client in-browser opens a Websocket connection to the proxy
+    * See "packages/proxy" notes for details
+  * Local Development
+    * Run Proxy UDP with `node packages/proxy/dist/index.js --nat=localhost` from monorepo root
+    * Run `npm run start-browser-client` then open browser window and navigate to localhost:8080 and start node.
+      * **Important:** `portal` object is exposed in the browser console and can be used to experiment with portal network functionality.
+        * See [Portal Network Docs](../portalnetwork/docs/modules.md) for API specs
+  * Local Devnet
+    * Run `npm run start-browser-client` from root of repo
+    * Run `bash packages/cli/scripts/devnet.sh -n [number of nodes you want to start]`
+    * Run `npx ts-node packages/cli/scripts/seeder.ts --rpcPort=8546 --numBlocks=2 --sourceFile="/path/to/blocksData.json" --numNodes=[number of nodes you started]`
+    * Grab an ENR (starts with `enr:-` from the logs (or else query the devnet bootnode via JSON RPC at localhost:8546). e.g.
+      ```
+      xxxx:discv5:service Updated ENR based on public multiaddr to enr:-ISZZZZ
+      ```
+    * Copy ENR (starts with `enr:-IS`) from Terminal
+    * Paste ENR into `Node ID` input and press `Connect to Node`
+    * Copy any blockhash from those loaded via the seeder script
+    * Paste into the search field in the Block Explorer. Hit `Find Block By Hash`
+    * Wait for Block info to be requested from the network, and displayed upon retrieval.
+    * Click the search button next to a Parent Hash to perform a search for that block. 
+  * packages/browser-client/src/index.tsx (Web)
+    * App.tsx
+      * Dispatches action `CREATENODEFROMBINDADDRESS` or `CREATENODE` in reducer with a payload containing `initialState` from globalReducer.tsx, which uses browser-level to store data using key `ultralight_history` in browser and Proxy `ws://127.0.0.1:5050` to create an Ultralight provider using `ethers` library with support for History Network protocol
+    * peerActions.tsx 
+      * Peer actions
+    * browser-client/src/Components/PortalInfo.tsx
+      * **Important** Useful information about Portal Network
+
+* packages/portalclient
+  * **Important**
+    * API in portalnetwork/docs/modules.md
+    * Architecture in portalnetwork/diagrams/ARCHITECTURE.md
+    * Other Diagrams in portalnetwork/diagrams
+    * Other Docs in portalnetwork/docs
+  * Routing Table Management
+    * Networks supported:
+      * State Network
+      * History Network
+    * Joining Network
+      * Each time `portal.addBootNode` is called, Ultralight tries to connect to the bootnode with the provided ENR.
+      * Once a discv5 session is established, the client sends a Portal Network `PING` request to the bootnode for each supported Portal Network Subnetwork and adds the bootnode to the corresponding k-bucket in each Subnetwork Routing Table. It follows on with `FINDNODES`` requests at all log2 distances between 239-256 where the node has empty k-buckets.  
+    * Maintenance
+      * Client selects random bucket from nearest 10 buckets that are not full but have 16 ENRs, generates a random Node ID that would fall in that bucket, and then initiates a `nodeLookup` request. Run this every 30 seconds to keep k-buckets fresh
+      * Client client sends a PING message to that node and adds it to the corresponding Subnetwork Routing Table each time a discv5 session is established with a new node in the network
+      * If a `NODES` response contains 1 or more ENRs then any ENRs not currently held in the Routing Table are added, and the corresponding Node sent a PING message to verify liveness.
+      * Remove Nodes from a specified Subnetwork Routing Table whenever a node doesn't respond to a PING requests.
+  * Content Management
+    * History Network
+      * Content for the History Network is stored in the DB as key/value pairs consisting of the below:
+        * `key` - hex string encoded representation of the History Network `content-id` (e.g. `0xfac2ca64257e97b691a0ff405c4f8d62ab52a6e0f0d2f92e25022ca12a56a881` is the `content-id` for the header for Block 1 on mainnet)
+        * `value` - hex string encoded representation of the RLP serialized content (block header, block body, receipt)
+  * packages/portalclient/test
+    * integration/integration.spec.ts
+      * **Important** Block header with Proof example
+    * subprotocols/history/headerProof.spec.ts
+      * **Important** Block header with Proof example
+    * subprotocols/history/historyProtocol.spec.ts
+      * **Important** Block header store/retrieve DB
+
+* packages/proxy
+  * About: Node.js Websocket-to-UDP Proxy to allow browser clients like Ultralight Browser Client to connect to a UDP based network.
+  * Proxy 
+      * Proxy assigns UDP port (for browser usage) to that connection and relays any packets received on the Websocket connection to the mapped UDP port and vice versa.
+      * Forwards Websocket Client messages to UDP socket after modification
+      * Forwards messages received at UDP port to Websocket Client unmodified
+      * Proxy listens for Websocket connections on 127.0.0.1 by default. To listen on an external IP address then must pass `--nat=ip --ip=<IP_ADDR>`
+      * Proxy listens for UDP packets on 127.0.0.1 by default. To listen to external IP address run `npm run start --nat=extip` and proxy will get public IP address from [Ipify](https://www.ipify.org/) and route all UDP traffic via the external IP address
+      * Persistent Ports to maintain a consistent IP and port may be enabled for single Websocket client by using `npm run start -- --persistentPort=5050` parameter when starting the Proxy. Default Websocket port if no persistent port specified is 5050. Each Websocket connection is paired with a persistent UDP socket bonded to that Websocket port + 1000.  So it would accept a single incoming Websocket connection on `localhost:5050` and will listen for UDP traffic on `localhost:6050`.
+      * Proxy accepts multiple persistent port parameters so the below command will start two Websocket listeners with corresponding UDP sockets. `npm run start -- --persistentPort=5050 --persistentPort=5052`
+    * proxy/src/index.ts
+      * Prometheus Metrics HTTP Server on port 5051
+      * Websocket Server on port 5050
+        * Listens for UDP incoming messages on socket port
+        * If an external IP address and port is provided then send it to the Websocket Client to update ENR
+        * Listens for Websocket incoming messages and when received they are forwarded via UDP
+
+* Definitions
+  * Distributed Hash Table - a DHT is a distributed KV list where nodes store for redundancy and other nodes may know how data is distributed and where to find a specific KV pair
+  * Kademlia - is a DHT protocol where nodes store a Routing Table with multiple lists containing the groupings of neighboring node distances from each other so nodes stores more information about other nodes close to them, and for finding peer nodes using a lookup method where it exhaustively asks surrounding nodes for the nodes closest to it, and are arranged by distance based on identifiers (uses XOR, which is only true when inputs differ, as its distance function to calculate by how far identifiers are from each other) for decisions based on closeness
+
+  * Discovery v4 - discv4 is Ethereum's current node discovery protocol based off of Kademlia, but it doesn't use the value part of the DHT (so FINDVALUE and STORE commands aren't required), it only uses the Routing Table to locate other nodes to organise the network, and it adds mutual endpoint verification to ensure a peer calling FINDNODE also participates in the discovery protocol, and it expects all discv4 nodes to maintain up-to-date ENR records containing information about a node that may be requested from any node using a discv4-specific packet called ENRRequest. Disadvantages is that it cannot yet differentiate between invalid node sub-protocols. It prevents replay attacks using timestamps but issues arise when a host clock is wrong. It has an issue in that messages can get dropped in mutual endpoint verification where there may be no way to tell if both peers have verified each other so one of the peers may incorrectly drop the FINDNODE packet
+
+  * Discovery v5 - discv5 is the discovery protocol which will be used by Eth 2.0. It aims at fixing various issues present in discv4.
+  It uses logarithmic distance by first calculating the distance and then running it through our log base 2 function `log2(A xor B)`
+  The changes how FINDNODE works, where in traditional Kademlia as well as in discv5, we pass an identifier. However, in discv5 we instead pass the logarithmic distance, meaning that a FINDNODE request gets a response containing all nodes at the specified logarithmic distance from the called node. It also aims to solve the discv4 issue of differentiating sub-protocols by adding Topic Tables, which are FIFO lists containing nodes which have registered advertisements with their peers that they provide a specific service, but there is currently no efficient way for a node to place ads on multiple peers, since it would require separate requests for every peer which is inefficient in a large-scale network, and it is unclear how many peers a node should place these ads on and exactly which peers to place them on. It also doesn't solve unreliable endpoint verification process.
+
+
 ## References <a id="references"></a>
 
 * Encode ZK Bootcamp
